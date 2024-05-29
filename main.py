@@ -69,18 +69,19 @@ def display_date_time(user_timezone=None, location_timezone=None):
 
 # retrieve the needed weather data from the full weather JSON
 # temperature, weather conditions, and humidity.
-def focused_weather_string(complete_weather_json, city):
+def focused_weather_string(complete_weather_json, city, unit):
     # print(json.dumps(complete_weather_json, indent=4))
-    return f"The weather in {city} is: Temprature: {complete_weather_json['main']['temp']}, Condition: {complete_weather_json['weather'][0]['description']}, Humidity: {complete_weather_json['main']['humidity']}"
+    return f"The weather in {city} is: Temprature: {complete_weather_json['main']['temp']} ({unit}), Condition: {complete_weather_json['weather'][0]['description']}, Humidity: {complete_weather_json['main']['humidity']}"
 
 
 # Function to retrieve the weather in a given location
-def return_weather_in_city(cityname):
+def return_weather_in_city(cityname, unit = 'metric'):
     url = "http://api.openweathermap.org/data/2.5/weather"
+    units = 'metric' if unit == 'Celsius' else 'imperial'
     params = {
         'q': cityname,
         'appid': WEATHER_MAP_API_KEY,
-        'units': 'metric'
+        'units': unit
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -164,6 +165,17 @@ def weather_units_setting(filename):
             else:
                 print("Invalid choice, please enter 1 or 2.")
 
+#This functions returns the local timezone as a string
+def get_local_timezone():
+    # Get the local timezone
+    local_tz = tzlocal.get_localzone()
+
+    # Get the current time in the local timezone
+    local_time = datetime.now(local_tz)
+
+    # Get the timezone as a string
+    timezone_str = local_time.tzname()
+    return timezone_str
 
 # stretch_goal_Alpha main function
 def main_stretch_goal_Alpha():
@@ -175,7 +187,8 @@ def main_stretch_goal_Alpha():
         weather_str = focused_weather_string(weather_data, city_name)
 
         full_cityname = get_full_cityname(weather_data['coord']['lon'], weather_data['coord']['lat'])
-        display_date_time('Asia/Jerusalem', full_cityname)
+        user_timezone = get_local_timezone()
+        display_date_time(user_timezone, full_cityname)
         print(weather_str)
 
     else:
@@ -186,14 +199,16 @@ def main_stretch_goal_A(filename):
     data = {}
     cities = []
 
+
     #Open setting file and present weather for each city
     data = get_dict_from_json_filename(filename)
     if data:
         cities = data['cities']
+        unit = data['unit']
         for city in cities:
-            weather_data = return_weather_in_city(city)
+            weather_data = return_weather_in_city(city, unit)
             if type(weather_data) == dict:
-                weather_str = focused_weather_string(weather_data, city)
+                weather_str = focused_weather_string(weather_data, city, unit)
 
                 full_cityname = get_full_cityname(weather_data['coord']['lon'], weather_data['coord']['lat'])
                 display_date_time('Asia/Jerusalem', full_cityname)
