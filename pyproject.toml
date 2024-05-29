@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "openweathermap"
+version = "0.1.0"
+description = ""
+authors = ["Asaf Henig <36384871+itai-henig@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pandas = "^2.2.2"
+pytz = "^2024.1"
+streamlit = "^1.35.0"
+requests = "^2.32.3"
+datetime = "^5.5"
+timezonefinder = "^6.5.0"
+tzlocal = "^5.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
