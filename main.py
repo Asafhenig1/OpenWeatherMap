@@ -1,42 +1,14 @@
 from datetime import datetime
 from timezonefinder import TimezoneFinder
-import pytz, requests, json, tzlocal
 import pandas as pd
+import streamlit as st
+import pytz, requests, json, tzlocal
 
 
 WEATHER_MAP_API_KEY = '7232dcb9557726a814f5309e43503e5b'
 WEATHER_MAP_USER = 'asafhenig'
-IPINFO_TOKEN_KEY = 'b37d8bc2d98b9e'
 
 # ========================================== CORE FUNCTION with Stretch Goal Alpha
-'''
-def get_local_timezone():
-    local_timezone = tzlocal.get_localzone()
-    return local_timezone
-
-def get_ip_address():
-    response = requests.get('https://api.ipify.org?format=json')
-    ip_address = response.json()['ip']
-    return ip_address
-
-#This function returns the local longitude and latitude of my current location
-def get_ip_location():
-    my_ip = get_ip_address() 
-    print(my_ip)
-    response = requests.get(f"https://ipinfo.io/{my_ip}/json?token={IPINFO_TOKEN_KEY}")
-    if response.status_code == 200:       
-       data = response.json()
-       localtimezone = data['timezone']
-       print(f"Asaf 1: {localtimezone}")
-       location = data['loc'].split(',')
-       latitude = location[0]
-       longitude = location[1]
-       print(f'Asaf2 lon: {longitude} , lat:{latitude}')
-       return longitude, latitude
-    else:
-        return f"Failed to retrieve current location data: {response.status_code}" 
-'''
-
 
 # This function returns timezone string given longitude and latitude values
 def get_full_cityname(longitude, latitude):
@@ -89,13 +61,12 @@ def return_weather_in_city(cityname, unit = 'metric'):
     else:
         return f"Failed to retrieve weather date: {response.status_code}"
 
-    # =====================================
 
 
 # ===================================== Stretch Goal A ================
 
 
-# Function to set default location
+# Function to set default location and return it
 def default_location_setting(filename):
     data = {}
     default_location = input('Please provide a default location for weather: ')
@@ -104,7 +75,8 @@ def default_location_setting(filename):
     data['default location'] = default_location
 
     # write to json file
-    write_data_to_json_file(data, filename)
+    return default_location if write_data_to_json_file(data, filename) else None
+
 
 
 # writing data to json file
@@ -134,19 +106,23 @@ def get_dict_from_json_filename(filename):
 
 
 # Function to enable user to add more location and put them in a list
-def weather_location_setting(filename):
+def weather_location_setting(filename, default_location):
     data = {}
     location_list = []
     data = get_dict_from_json_filename(filename)
     if data:
-        prompt = "Please place a city name you are interested to know its weather. If you do not want to add more cities wrtie \'stop\': "
-        while True:
-            user_input = input(prompt)
-            if user_input != 'stop':
-                location_list.append(user_input)
-            else:
-                data['cities'] = location_list
-                return write_data_to_json_file(data, filename)
+        prompt = f"If you are interested to know the weather in \'{default_location}\',pease press Enter.\n\
+Alternatively, write down a list of other cities separated by commas (\',\'): "
+        user_input = input(prompt)
+        if user_input != '':
+            location_list = user_input.split(',')
+            data['cities'] = location_list
+            return write_data_to_json_file(data, filename)
+        else:
+            return False
+    else:
+        return False
+
 
 
 # Functino to set Units for weather
@@ -195,15 +171,21 @@ def main_stretch_goal_Alpha():
         print(weather_data)
 
  # stretch_goal_A main function
-def main_stretch_goal_A(filename):
+def main_stretch_goal_A(filename, city_list):
     data = {}
     cities = []
 
 
     #Open setting file and present weather for each city
     data = get_dict_from_json_filename(filename)
+
+    print(f"The local {filename} file has this data:\n" + json.dumps(data, indent=4))
+
     if data:
-        cities = data['cities']
+        if city_list:
+            cities = data['cities']
+        else:
+            cities.append(data['default location'])
         unit = data['unit']
         for city in cities:
             weather_data = return_weather_in_city(city, unit)
@@ -218,24 +200,28 @@ def main_stretch_goal_A(filename):
     else:
         print(f'Cannot get {filename} file')
 
+#WeatherMap Project Main Function
 def main():
     data = {}
+    city_list = True
     filename = 'setting.json'
 
     # Default location setting
-    default_location_setting(filename)
+    default_location = default_location_setting(filename)
 
-    # multiple locations setting
-    weather_location_setting(filename)
+    if default_location:
 
-    # Units setting
-    weather_units_setting(filename)
+        # multiple locations setting
+        city_list = weather_location_setting(filename, default_location)
 
-    data = get_dict_from_json_filename(filename)
-    print(f"The local {filename} file has this data:\n" + json.dumps(data, indent=4))
+        # Units setting
+        weather_units_setting(filename)
 
-    # run main_stretch_goal
-    main_stretch_goal_A(filename)
+        # run main_stretch_goal
+        main_stretch_goal_A(filename, city_list)
+
+    else:
+        print('Failed to store default location')
 
 
 if __name__ == '__main__':
