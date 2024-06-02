@@ -66,7 +66,7 @@ def return_weather_in_city(cityname, unit = 'metric'):
 # ===================================== Stretch Goal A ================
 
 
-# Function to set default location and return it
+# Function to set default location and return it for Stretch Goal A
 def default_location_setting(filename):
     data = {}
     default_location = input('Please provide a default location for weather: ')
@@ -76,6 +76,22 @@ def default_location_setting(filename):
 
     # write to json file
     return default_location if write_data_to_json_file(data, filename) else None
+
+# Function to set default location and return it for Stretch Goal C
+def default_location_setting_web(filename):
+    data = {}
+
+    default_location = st.text_input('Please provide a default location for yor Weather Application','')
+
+    if default_location:
+       st.write(f'You have set the beautify city of \'{default_location}\', as the default location for this Weather App!')
+
+    #add default location to data dictionary
+    data['default location'] = default_location
+
+    #write to json file
+    return default_location if write_data_to_json_file_web(data, filename) else None
+
 
 
 
@@ -92,6 +108,18 @@ def write_data_to_json_file(data, filename):
         print(f"Json file {filename} was stored locally.")
         return True
 
+# writing data to json file
+# input dictionary , json filename
+def write_data_to_json_file_web(data, filename):
+    try:
+        with open(filename, 'w') as file:
+            json.dump(data, file, indent=4)
+    except Exception as e:
+        st.write(f"An error occurred while trying to write a json file {filename}: {e}")
+        return False
+    else:
+        st.write(f"Json file {filename} was stored locally.")
+        return True
 
 # return dictionary from json file
 def get_dict_from_json_filename(filename):
@@ -161,7 +189,6 @@ def main_stretch_goal_Alpha():
 
     if type(weather_data) == dict:
         weather_str = focused_weather_string(weather_data, city_name)
-
         full_cityname = get_full_cityname(weather_data['coord']['lon'], weather_data['coord']['lat'])
         user_timezone = get_local_timezone()
         display_date_time(user_timezone, full_cityname)
@@ -171,7 +198,7 @@ def main_stretch_goal_Alpha():
         print(weather_data)
 
  # stretch_goal_A main function
-def main_stretch_goal_A(filename, city_list):
+def retrieve_data_from_setting_file(filename, city_list):
     data = {}
     cities = []
 
@@ -200,8 +227,8 @@ def main_stretch_goal_A(filename, city_list):
     else:
         print(f'Cannot get {filename} file')
 
-#WeatherMap Project Main Function
-def main():
+#WeatherMap Project Main Function which implements Stretch Goal A
+def main_stretch_goal_A():
     data = {}
     city_list = True
     filename = 'setting.json'
@@ -218,10 +245,50 @@ def main():
         weather_units_setting(filename)
 
         # run main_stretch_goal
-        main_stretch_goal_A(filename, city_list)
+        retrieve_data_from_setting_file(filename, city_list)
 
     else:
         print('Failed to store default location')
+
+def set_streamlit_markdown():
+    # Custom CSS to increase the font size
+    css = """
+    <style>
+    /* Increase the font size for the label of the input field */
+    /* Targeting the label of the text input */
+    div.stTextInput > label {
+        font-size: 18px !important;
+    }
+    label {
+        font-size: 25px !important;
+    }
+    /* Increase the font size for the input field */
+    input {
+        font-size: 25px !important;
+        height: auto;  /* Adjust height to fit larger text if necessary */
+    }
+    
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
+
+#Main for Stretch Goal C (Use of streamlit)
+def main_goal_stretch_goal_c():
+    data = {}
+    city_list = True
+    filename = 'setting.json'
+
+    set_streamlit_markdown()
+
+    # Default location setting
+    default_location = default_location_setting_web(filename)
+
+#main
+def main():
+
+    st.title('WeatherMap App')
+
+    main_goal_stretch_goal_c()
 
 
 if __name__ == '__main__':
