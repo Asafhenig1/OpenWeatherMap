@@ -4,11 +4,10 @@ import pandas as pd
 import streamlit as st
 import pytz, requests, json, tzlocal
 
-
 WEATHER_MAP_API_KEY = '7232dcb9557726a814f5309e43503e5b'
 WEATHER_MAP_USER = 'asafhenig'
+DEFAULT_FILENAME = 'setting.json'
 
-# ========================================== CORE FUNCTION with Stretch Goal Alpha
 
 # This function returns timezone string given longitude and latitude values
 def get_full_cityname(longitude, latitude):
@@ -21,78 +20,66 @@ def get_full_cityname(longitude, latitude):
 
 
 # This function prints local timezone and weather location timezone
-def display_date_time(user_timezone=None, location_timezone=None):
+def display_date_time(original_city_name, location_timezone=None):
     # Fetch current date and time in user's timezone
-    if user_timezone == None:
-        local_timezone = tzlocal.get_localzone()  # Get the local timezone
-        user_time = datetime.now(local_timezone)  # Get the current time in the local timezone
-    else:
-        user_time = datetime.now(pytz.timezone(user_timezone))
+    user_timezone = tzlocal.get_localzone()  # Get the local timezone
+    user_time = datetime.now(user_timezone)  # Get the current time in the local timezone
 
-    formatted_user_time = user_time.strftime("%A, %B %d, %Y, %I:%M %p")
-    print(f"Your current date and time in {user_timezone} is: {formatted_user_time}")
+    formatted_user_time_str = user_time.strftime("%A, %B %d, %Y, %I:%M %p")
+    print(f"Your user's date and time in timezone = {user_timezone} is: {formatted_user_time_str}")
 
     # Optional: Convert and display the date and time for the specified location
     if location_timezone:
         location_time = user_time.astimezone(pytz.timezone(location_timezone))
         formatted_location_time = location_time.strftime("%A, %B %d, %Y, %I:%M %p")
-        print(f"Date and time in {location_timezone} is: {formatted_location_time}")
+        print(f"The chosen date and time in the city \'{original_city_name}\': Timezone {location_timezone} is: {formatted_location_time}")
 
 
 # retrieve the needed weather data from the full weather JSON
 # temperature, weather conditions, and humidity.
 def focused_weather_string(complete_weather_json, city, unit):
     # print(json.dumps(complete_weather_json, indent=4))
-    return f"The weather in {city} is: Temprature: {complete_weather_json['main']['temp']} ({unit}), Condition: {complete_weather_json['weather'][0]['description']}, Humidity: {complete_weather_json['main']['humidity']}"
+    return f"The weather in \'{city}\' is: Temperature: {complete_weather_json['main']['temp']} ({unit}), Condition: {complete_weather_json['weather'][0]['description']}, Humidity: {complete_weather_json['main']['humidity']}"
 
 
 # Function to retrieve the weather in a given location
-def return_weather_in_city(cityname, unit = 'metric'):
+def return_weather_in_city(cityname, unit='Celsius', print_error=True):
     url = "http://api.openweathermap.org/data/2.5/weather"
-    units = 'metric' if unit == 'Celsius' else 'imperial'
+    units = 'metric' if (unit == 'Celsius' or unit == 'metric') else 'imperial'
     params = {
         'q': cityname,
         'appid': WEATHER_MAP_API_KEY,
-        'units': unit
+        'units': units
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
         return response.json()
     else:
-        return f"Failed to retrieve weather date: {response.status_code}"
-
-
-
-# ===================================== Stretch Goal A ================
+        return f"Failed to retrieve weather date: {response.status_code}" if print_error else None
 
 
 # Function to set default location and return it for Stretch Goal A
 def default_location_setting(filename):
     data = {}
-    default_location = input('Please provide a default location for weather: ')
+    default_location_exist = False
 
-    # add default location to data dictionary
-    data['default location'] = default_location
+    while not default_location_exist:
+
+        default_location = input('Please provide a city name to be used as a default location for weather: ')
+
+        #Check if such a City exist by trying to fetch its weather
+        #If fetching weather than default_location_exist = True
+        if return_weather_in_city(default_location, 'Celsius', False):
+            default_location_exist = True
+        else:
+            print(f'City Name \'{default_location}\' is not recognized. Enter a new city name')
+            continue
+
+        # add default location to data dictionary
+        data['default location'] = default_location
 
     # write to json file
     return default_location if write_data_to_json_file(data, filename) else None
-
-# Function to set default location and return it for Stretch Goal C
-def default_location_setting_web(filename):
-    data = {}
-
-    default_location = st.text_input('Please provide a default location for yor Weather Application','')
-
-    if default_location:
-       st.write(f'You have set the beautify city of \'{default_location}\', as the default location for this Weather App!')
-
-    #add default location to data dictionary
-    data['default location'] = default_location
-
-    #write to json file
-    return default_location if write_data_to_json_file_web(data, filename) else None
-
-
 
 
 # writing data to json file
@@ -108,18 +95,6 @@ def write_data_to_json_file(data, filename):
         print(f"Json file {filename} was stored locally.")
         return True
 
-# writing data to json file
-# input dictionary , json filename
-def write_data_to_json_file_web(data, filename):
-    try:
-        with open(filename, 'w') as file:
-            json.dump(data, file, indent=4)
-    except Exception as e:
-        st.write(f"An error occurred while trying to write a json file {filename}: {e}")
-        return False
-    else:
-        st.write(f"Json file {filename} was stored locally.")
-        return True
 
 # return dictionary from json file
 def get_dict_from_json_filename(filename):
@@ -137,23 +112,32 @@ def get_dict_from_json_filename(filename):
 def weather_location_setting(filename, default_location):
     data = {}
     location_list = []
+    location_list_is_empty = True
+
+    #pull out json dictionary
     data = get_dict_from_json_filename(filename)
     if data:
-        prompt = f"If you are interested to know the weather in \'{default_location}\',pease press Enter.\n\
-Alternatively, write down a list of other cities separated by commas (\',\'): "
-        user_input = input(prompt)
-        if user_input != '':
-            location_list = user_input.split(',')
+        prompt = f"If you are interested to know the weather in your default city \'{default_location}\',please press Enter.\n\
+Alternatively, start a new list of cities you are interested in by writing down their names and press Enter after each one.\n\
+Once you are done with the list simply Press Enter: "
+        user_input = input(prompt).strip()
+        while user_input:
+            if not return_weather_in_city(user_input, 'Celsius', False):
+                print(f'The city \'{user_input}\' is not known.')
+            else:
+                location_list_is_empty = False
+                location_list.append(user_input)
+
+            user_input = input('Enter another city name or press Enter to end your city list: ').strip()
+
+        if not location_list_is_empty:
             data['cities'] = location_list
             return write_data_to_json_file(data, filename)
         else:
             return False
-    else:
-        return False
 
 
-
-# Functino to set Units for weather
+# Function to set Units for weather
 def weather_units_setting(filename):
     data = {}
     units = ['Celsius', 'Fahrenheit']
@@ -169,6 +153,7 @@ def weather_units_setting(filename):
             else:
                 print("Invalid choice, please enter 1 or 2.")
 
+
 #This functions returns the local timezone as a string
 def get_local_timezone():
     # Get the local timezone
@@ -181,32 +166,16 @@ def get_local_timezone():
     timezone_str = local_time.tzname()
     return timezone_str
 
-# stretch_goal_Alpha main function
-def main_stretch_goal_Alpha():
-    # Ask user for a city name input
-    city_name = input('Please provide the name of the city for which you would like to get the weather: ')
-    weather_data = return_weather_in_city(city_name)
 
-    if type(weather_data) == dict:
-        weather_str = focused_weather_string(weather_data, city_name)
-        full_cityname = get_full_cityname(weather_data['coord']['lon'], weather_data['coord']['lat'])
-        user_timezone = get_local_timezone()
-        display_date_time(user_timezone, full_cityname)
-        print(weather_str)
-
-    else:
-        print(weather_data)
-
- # stretch_goal_A main function
+# stretch_goal_A main function
 def retrieve_data_from_setting_file(filename, city_list):
     data = {}
     cities = []
 
-
     #Open setting file and present weather for each city
     data = get_dict_from_json_filename(filename)
 
-    print(f"The local {filename} file has this data:\n" + json.dumps(data, indent=4))
+    print(f"The configuration json file \'{filename}\' file has this data:\n" + json.dumps(data, indent=4))
 
     if data:
         if city_list:
@@ -220,76 +189,119 @@ def retrieve_data_from_setting_file(filename, city_list):
                 weather_str = focused_weather_string(weather_data, city, unit)
 
                 full_cityname = get_full_cityname(weather_data['coord']['lon'], weather_data['coord']['lat'])
-                display_date_time('Asia/Jerusalem', full_cityname)
+                display_date_time(city, full_cityname)
                 print(weather_str)
             else:
                 print(weather_data)
     else:
         print(f'Cannot get {filename} file')
 
-#WeatherMap Project Main Function which implements Stretch Goal A
-def main_stretch_goal_A():
-    data = {}
-    city_list = True
-    filename = 'setting.json'
 
-    # Default location setting
-    default_location = default_location_setting(filename)
-
-    if default_location:
+# stretch_goal_A main function
+def main_stretch_goal_a():
+    #Default location setting
+    if default_location := default_location_setting(DEFAULT_FILENAME):
 
         # multiple locations setting
-        city_list = weather_location_setting(filename, default_location)
+        city_list_was_created = weather_location_setting(DEFAULT_FILENAME, default_location)
 
         # Units setting
-        weather_units_setting(filename)
+        weather_units_setting(DEFAULT_FILENAME)
 
         # run main_stretch_goal
-        retrieve_data_from_setting_file(filename, city_list)
+        retrieve_data_from_setting_file(DEFAULT_FILENAME, city_list_was_created)
 
     else:
         print('Failed to store default location')
 
-def set_streamlit_markdown():
-    # Custom CSS to increase the font size
-    css = """
-    <style>
-    /* Increase the font size for the label of the input field */
-    /* Targeting the label of the text input */
-    div.stTextInput > label {
-        font-size: 18px !important;
-    }
-    label {
-        font-size: 25px !important;
-    }
-    /* Increase the font size for the input field */
-    input {
-        font-size: 25px !important;
-        height: auto;  /* Adjust height to fit larger text if necessary */
-    }
-    
-    </style>
-    """
-    st.markdown(css, unsafe_allow_html=True)
 
-#Main for Stretch Goal C (Use of streamlit)
-def main_goal_stretch_goal_c():
+# stretch_goal_Alpha main function
+def main_stretch_goal_alpha():
+    city_exist = False
+
+    while not city_exist:
+
+        city_name = input('Please provide the name of the city for which you would like to get the weather: ')
+        weather_data = return_weather_in_city(city_name)
+
+        if type(weather_data) == dict:
+            weather_str = focused_weather_string(weather_data, city_name, 'Celsius')
+            full_cityname = get_full_cityname(weather_data['coord']['lon'], weather_data['coord']['lat'])
+            #user_timezone = get_local_timezone()
+            display_date_time(city_name, full_cityname)
+            print(weather_str)
+        else:
+            print(f'City Name \'{city_name}\' is not recognized. Enter a new name')
+            continue
+        break
+
+
+#This function implements the core request of this project
+def run_core_function():
+    city_exist = False
+
+    while not city_exist:
+
+        city_name = input('Please provide the name of the city for which you would like to get the weather: ')
+
+        weather_data = return_weather_in_city(city_name, 'Celsius', False)
+        if weather_data:
+            print(
+                f"The weather in \'{city_name}\' is: Temperature: {weather_data['main']['temp']} (Celsius), Condition: {weather_data['weather'][0]['description']}, Humidity: {weather_data['main']['humidity']}")
+            city_exist = True
+        else:
+            print(f'City Name \'{city_name}\' is not recognized. Enter a new name')
+            continue
+
+
+#This function is a simple welcome message and instruction string
+def welcome_message_and_instructions():
+    print("\n")
+    print("Welcome to the Weather Checker Application.")
+    print("===========================================")
+    print("In this application users fetch the weather conditions of a given city or cities.\n")
+
+
+def main_menu():
+    print('Choose one of the options below:')
+    print('1) Core Functionality: Providing weather for a given city')
+    print('2) Enhanced functionality A: Adding timezones and time to weather')
+    print('3) Enhanced functionality B: Using json files to store configuration')
+    print('4) Exit the program\n')
+    while True:
+        try:
+            user_choice = int(input("Enter 1,2,3 or 4: "))
+            if user_choice in range(1, 5):
+                return user_choice
+            else:
+                print(f'Your chose \'{user_choice}\' which is neither 1, 2, 3 or 4. Try again')
+        except ValueError:
+            print('You did not provide a number. Try again')
+
+
+#WeatherMap Project Main Function (Stretch Goal C)  which implements Stretch Goal A
+def main():
     data = {}
     city_list = True
-    filename = 'setting.json'
 
-    set_streamlit_markdown()
+    welcome_message_and_instructions()
 
-    # Default location setting
-    default_location = default_location_setting_web(filename)
+    while True:
 
-#main
-def main():
+        project_menu = main_menu()
 
-    st.title('WeatherMap App')
+        #I am using simple if statement as 'match'-'case' was only introduced in python 3.10
+        if project_menu == 1:
+            run_core_function()
+        elif project_menu == 2:
+            main_stretch_goal_alpha()
+        elif project_menu == 3:
+            main_stretch_goal_a()
+        elif project_menu == 4:
+            print("Thank you for using the program.\nGoodbye")
+            exit(0)
 
-    main_goal_stretch_goal_c()
-
+        print('\n')
 
 if __name__ == '__main__':
     main()
