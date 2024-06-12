@@ -39,7 +39,7 @@ def display_date_time(original_city_name, location_timezone=None):
 # temperature, weather conditions, and humidity.
 def focused_weather_string(complete_weather_json, city, unit):
     # print(json.dumps(complete_weather_json, indent=4))
-    return f"The weather in \'{city}\' is: Temperature: {complete_weather_json['main']['temp']} ({unit}), Condition: {complete_weather_json['weather'][0]['description']}, Humidity: {complete_weather_json['main']['humidity']}"
+    return f"The weather in \'{city}\' is: Temperature: {complete_weather_json['main']['temp']} ({unit}), Condition: {complete_weather_json['weather'][0]['description']}, Humidity: {complete_weather_json['main']['humidity']}%"
 
 
 # Function to retrieve the weather in a given location
@@ -247,7 +247,7 @@ def run_core_function():
         weather_data = return_weather_in_city(city_name, 'Celsius', False)
         if weather_data:
             print(
-                f"The weather in \'{city_name}\' is: Temperature: {weather_data['main']['temp']} (Celsius), Condition: {weather_data['weather'][0]['description']}, Humidity: {weather_data['main']['humidity']}")
+                f"The weather in \'{city_name}\' is: Temperature: {weather_data['main']['temp']} (Celsius), Condition: {weather_data['weather'][0]['description']}, Humidity: {weather_data['main']['humidity']}%")
             city_exist = True
         else:
             print(f'City Name \'{city_name}\' is not recognized. Enter a new name')
