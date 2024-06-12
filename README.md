@@ -4,17 +4,24 @@
 **Owner**:             Asaf Henig (asafhenig1@gmail.com)
 **Github repository**: https://github.com/Asafhenig1/OpenWeatherMap
 **Description**: Weather Checker Application - This OpenWeatherMap project focuses on the ability to provide users 
-with weather information and exact hour for a provided one or more, 
-city names.
+with weather information and exact hour for a provided one or more city names.
 
 
-The project includes these specific steps (**aligned with 'Stretch Goal B'**)
-1) Core Functionality: 
-   A) Program is requesting user to enter the name of a 'default city'. It will validate the 
-      user's input and will continue to ask for a default city name until a real and veted city is given.
-   B) The default city name is saved in a system json setting file name 'Setting.json'
-   C) The system will then ask the user whether he/she would like to know the weather in the default_city or alternatively provide a list of other 
-      cities that are 
+The project provides users with a menu that enables them to choose and run any of these options: 
+1) **Core Functionality: Providing weather for a given city**
+   Program is requesting user to enter a city name for which it will provide the weather (temperature is provided in Celsius)
+2) **Enhanced Functionality A: Adding timezone and time to  the weather**
+   Program is requesting user to enter a city name and will provide:
+   A) User's location (server location) timezone and time
+   B) City location timezone and time
+   C) City weather (provided in Celsius)
+3) **Enhanced functionality B: Using json files to store configuration**
+   Program is requesting customer to provide the below list of details, all details are stored in setting.json file.
+   A) 'default cityname' for which the program could provide timezone, time and weather in case no other city is chosen by the user.
+   B) (Optional) List of cities for which the program could provide timezone, time and weather. 
+   C) Temperature units: to be chosen from two alternatives: Celsius or Fahrenheit
+4) **Exit the program**
+   The program will gracefully exit
 
 # setup
 
