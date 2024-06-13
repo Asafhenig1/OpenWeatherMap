@@ -1,4 +1,4 @@
-# Project Information
+# Description
 
 **Project Name**:      Weather Checker Application - OpenWeatherMap
 **Owner**:             Asaf Henig (asafhenig1@gmail.com)
@@ -23,9 +23,15 @@ The project provides users with a menu that enables them to choose and run any o
 4) **Exit the program**
    The program will gracefully exit
 
-# setup
-
-
 # usage
+The program can run from shell or from your python editor environment.
+Hereunder instructions how to run it from shell
+
+1) Download all files form the github repository (see above) to a known location in your computer
+2) Open shell and get to the folder to which you've downloaded the files
+3) Run 'poetry install' and 'poetry build'
+4) Run 'pyhon main.py'
+5) Follow the program instruction on screen 
 
 # Dependencies
+Customer should make sure he has a python supporting environment.
