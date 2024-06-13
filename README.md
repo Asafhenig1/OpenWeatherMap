@@ -1,9 +1,12 @@
 # Description
 
 **Project Name**:      Weather Checker Application - OpenWeatherMap
+
 **Owner**:             Asaf Henig (asafhenig1@gmail.com)
+
 **Github repository**: https://github.com/Asafhenig1/OpenWeatherMap
-**Description**: Weather Checker Application - This OpenWeatherMap project focuses on the ability to provide users 
+
+**Overview**: Weather Checker Application - This OpenWeatherMap project focuses on the ability to provide users 
 with weather information and exact hour for a provided one or more city names.
 
 
